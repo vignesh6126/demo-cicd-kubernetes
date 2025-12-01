@@ -8,7 +8,9 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/vignesh6126/demo-cicd-kubernetes.git'
+                // FIX: Use 'main' branch instead of 'master'
+                git branch: 'main', 
+                     url: 'https://github.com/vignesh6126/demo-cicd-kubernetes.git'
             }
         }
         
@@ -41,17 +43,19 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 bat """
-                    # FIX: Add --validate=false to bypass authentication
+                    # Deploy to Kubernetes with validation disabled
                     kubectl apply -f k8s/deployment.yaml --validate=false
                     kubectl apply -f k8s/service.yaml --validate=false
                     
-                    # Check deployment
+                    # Check deployment status
                     timeout /t 10 /nobreak
+                    echo "=== Kubernetes Status ==="
                     kubectl get pods
                     kubectl get services
                     
-                    echo "=== DEPLOYMENT SUCCESSFUL ==="
-                    echo "Application URL: http://localhost:30001"
+                    echo ""
+                    echo "✅ Deployment Complete!"
+                    echo "🌐 Application URL: http://localhost:30001"
                 """
             }
         }
@@ -60,13 +64,12 @@ pipeline {
     post {
         success {
             echo '🎉 CI/CD Pipeline Completed Successfully!'
-            echo '✅ Code checked out from GitHub'
-            echo '✅ Dependencies installed'
-            echo '✅ Docker image built and tagged'
-            echo '✅ Logged into Docker Hub'
-            echo '✅ Image pushed to Docker Hub'
-            echo '✅ Deployed to Kubernetes'
             echo '📦 Docker Image: vignesg043/node-app:latest'
+            echo '🔗 GitHub Repo: https://github.com/vignesh6126/demo-cicd-kubernetes'
+            echo '🐳 Docker Hub: https://hub.docker.com/r/vignesg043/node-app'
+        }
+        failure {
+            echo '❌ Pipeline failed! Check logs above.'
         }
     }
 }
