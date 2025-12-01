@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: node-app
-        image: YOUR-DOCKERHUB-NAME/node-app:latest
+        image: vignesg043/node-app:latest
         ports:
         - containerPort: 3001
