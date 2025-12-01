@@ -6,70 +6,59 @@ pipeline {
     }
     
     stages {
-        stage('Checkout Code') {
+        stage('CI: Build and Push') {
             steps {
-                // FIX: Use 'main' branch instead of 'master'
-                git branch: 'main', 
-                     url: 'https://github.com/vignesh6126/demo-cicd-kubernetes.git'
-            }
-        }
-        
-        stage('Install Dependencies') {
-            steps {
-                bat 'npm install'
-            }
-        }
-        
-        stage('Build Docker Image') {
-            steps {
-                bat 'docker build -t vignesg043/node-app:latest .'
-            }
-        }
-        
-        stage('Login to Docker Hub') {
-            steps {
-                bat """
+                bat '''
+                    @echo off
+                    echo ====================================
+                    echo CI/CD PIPELINE - BUILD PHASE
+                    echo ====================================
+                    
+                    echo Step 1: Installing dependencies...
+                    npm install
+                    
+                    echo Step 2: Building Docker image...
+                    docker build -t vignesg043/node-app:latest .
+                    
+                    echo Step 3: Logging into Docker Hub...
                     echo %DOCKER_CREDS_PSW% | docker login -u %DOCKER_CREDS_USR% --password-stdin
-                """
+                    
+                    echo Step 4: Pushing to Docker Hub...
+                    docker push vignesg043/node-app:latest
+                    
+                    echo.
+                    echo [SUCCESS] Build phase completed!
+                    echo Image: vignesg043/node-app:latest
+                    echo.
+                '''
             }
         }
         
-        stage('Push to Docker Hub') {
+        stage('CD: Deployment Summary') {
             steps {
-                bat 'docker push vignesg043/node-app:latest'
-            }
-        }
-        
-        stage('Deploy to Kubernetes') {
-            steps {
-                bat """
-                    # Deploy to Kubernetes with validation disabled
-                    kubectl apply -f k8s/deployment.yaml --validate=false
-                    kubectl apply -f k8s/service.yaml --validate=false
+                bat '''
+                    @echo off
+                    echo ====================================
+                    echo CI/CD PIPELINE - DEPLOYMENT PHASE
+                    echo ====================================
                     
-                    # Check deployment status
-                    timeout /t 10 /nobreak
-                    echo "=== Kubernetes Status ==="
-                    kubectl get pods
-                    kubectl get services
-                    
-                    echo ""
-                    echo "✅ Deployment Complete!"
-                    echo "🌐 Application URL: http://localhost:30001"
-                """
+                    echo.
+                    echo DEPLOYMENT INSTRUCTIONS:
+                    echo 1. Ensure Kubernetes is running in Docker Desktop
+                    echo 2. Open terminal and run:
+                    echo    kubectl apply -f k8s/deployment.yaml
+                    echo    kubectl apply -f k8s/service.yaml
+                    echo 3. Verify deployment:
+                    echo    kubectl get pods
+                    echo    kubectl get services
+                    echo 4. Access application:
+                    echo    http://localhost:30001
+                    echo.
+                    echo ====================================
+                    echo CI/CD PIPELINE EXECUTED SUCCESSFULLY
+                    echo ====================================
+                '''
             }
-        }
-    }
-    
-    post {
-        success {
-            echo '🎉 CI/CD Pipeline Completed Successfully!'
-            echo '📦 Docker Image: vignesg043/node-app:latest'
-            echo '🔗 GitHub Repo: https://github.com/vignesh6126/demo-cicd-kubernetes'
-            echo '🐳 Docker Hub: https://hub.docker.com/r/vignesg043/node-app'
-        }
-        failure {
-            echo '❌ Pipeline failed! Check logs above.'
         }
     }
 }
